@@ -10,8 +10,7 @@ loss under climate change revealed by a global assessment”.
 
 |---- generation length
 
-||--- generation_lenth_model.R
-  main code for generation-length mode
+||--- generation_lenth_model.R # main code for generation-length mode
 
 ||--- targetSpan_table.csv
   targert corresponding time span according to growth from and ecological group
