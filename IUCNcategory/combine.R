@@ -1,15 +1,12 @@
-library(ggplot2);library(stringr);library(sf);library(dplyr);library(raster)
-setwd('F:/luoao/RLI/')
-
-A3c <- read.csv('data/IUCNcategory/A3c/A3c.csv')
+A3c <- read.csv(paths['A3c'])
 colnames(A3c) <- colnames(A3c) %>% str_remove('_DS');colnames(A3c)[-1] <- paste0('A_',colnames(A3c)[-1])
-B1ab <- read.csv('data/IUCNcategory/B1abiii/B1abiii.csv')
+B1ab <- read.csv(paths['B2'])
 
-spls <- read.csv('data/spinfo/spls_mark_all.csv')
+spls <- read.csv(paths['spMarkAll'])
 spls <- spls %>% left_join(A3c) %>% left_join(B1ab)
 spls$D[(spls$num_coords_c>0)&(spls$num_coords_c<=5)] <- 'NT'
 
-scenario <- read.csv('data/scenarios_list.csv')
+scenario <- read.csv(paths[['scenario']])
 scenario <- paste0(scenario$sn,'_',scenario$ds) %>% unique()# <- 
 spls <- spls[,c('speciesKey',paste0('A_',scenario),paste0('B_',scenario),'D') ]
 scenario_ab <- c(paste0('A_',scenario),paste0('B_',scenario),'D') 
@@ -27,7 +24,7 @@ for (i in 1:ncol(scenario_ab)) {
   sp.assess[[scenario[i]]] <- tmp %>% factor(levels=1:6,labels = c('LC','NT','VU','EN','CR','EX'))
 }
 
-spls <- read.csv('data/spinfo/spls_mark_all.csv')
+spls <- read.csv(paths['spMarkAll'])
 spls <- spls %>% left_join(A3c) %>% left_join(B1ab)
 spls$D[(spls$num_coords_c>0)&(spls$num_coords_c<=5)] <- 'NT'
 # for (sn in scenario_ab ) {
@@ -35,11 +32,15 @@ spls$D[(spls$num_coords_c>0)&(spls$num_coords_c<=5)] <- 'NT'
 # }
 
 sp.assess <- sp.assess %>% left_join(spls)
-sp.assess <-read.csv('data/IUCNcategory/sp_assess_all.csv')
+#sp.assess <-read.csv('data/IUCNcategory/sp_assess_all.csv')
 
-sp <- read.csv('E:/LuoA/PRIME/splist/spls.csv')
+sp <- read.csv(paths['spLS'])
 table(sp$class)
 sp <- sp$speciesKey[sp$class%in%c('Magnoliopsida','Liliopsida')]
 
 sp.assess <- sp.assess[sp.assess$speciesKey%in%sp,]
-write.csv(sp.assess,'data/IUCNcategory/sp_assess_all.csv',row.names = F)
+
+sptss <- read.csv(paths["spTSS"])
+sptss <- sptss$speciesKey[sptss$tss<=0.5]
+sp.assess[sp.assess$speciesKey%in%sptss,str_detect(colnames(sp.assess),'(ssp)|A|B|D')] <- NA 
+write.csv(sp.assess,paths['spAssAll'],row.names = F)

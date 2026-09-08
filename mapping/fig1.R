@@ -1,10 +1,9 @@
-setwd('D:/work/RLI/')
 options(ggplot2.text.family = "Arial")
 sapply(c('sf','dplyr','ggplot2','raster','RColorBrewer','stringr'),require,character.only=T)#'rasterVis'
 sn <- 'ssp370_limit'
 
-red.list <- read.csv('data/outputs/spInfo/sp_assess_all.csv')# %>% na.omit()
-sp <- read.csv('data/outputs/spInfo/spls.csv')
+red.list <- read.csv(paths['spAssAll'])# %>% na.omit()
+sp <- read.csv(paths['spLS'])
 sp <- sp$speciesKey[sp$class%in%c('Magnoliopsida','Liliopsida')]
 red.list <- red.list[red.list$speciesKey%in%sp,]
 
@@ -27,6 +26,7 @@ pdat$IUCN <- pdat$IUCN %>% str_replace('A_B_D','M') %>%
 
 pdat$IUCN[is.na(pdat$ssp370_limit)] <- 'DD'
 pdat$ssp370_limit[is.na(pdat$ssp370_limit)] <- 'DD'
+pdat <- pdat[!pdat$ssp370_limit%in%'DD',]
 
 table(pdat$IUCN)
 sum(is.na(pdat$IUCN))
@@ -35,7 +35,7 @@ pdat$type <- 'ssp370_limit'
 #
 
 pdata <- pdat
-pdata$IUCN_c <- factor(pdata$ssp370_limit,levels=c('DD','LC','NT','VU','EN','CR','EX'))
+pdata$IUCN_c <- factor(pdata$ssp370_limit,levels=c('LC','NT','VU','EN','CR','EX'))
 pdata <- pdata %>% group_by(IUCN_c) %>% mutate(IUCN_num=n()) %>% dplyr::select(IUCN_num,IUCN_c) %>% distinct()
 pdata <- pdata[order(as.numeric(pdata$IUCN_c)),]
 
@@ -52,7 +52,7 @@ pdata1 <- pdata
 
 #
 pdata <- pdat
-pdata$IUCN_c <- factor(pdata$ssp370_limit,levels=c('DD','LC','NT','VU','EN','CR','EX'))
+pdata$IUCN_c <- factor(pdata$ssp370_limit,levels=c('LC','NT','VU','EN','CR','EX'))
 pdata <- pdata %>% group_by(IUCN) %>% mutate(IUCN_num=n()) %>% dplyr::select(IUCN,IUCN_num,IUCN_c) %>% distinct()
 #pdata <- pdata[pdata$IUCN_num>180,]
 pdata$IUCN <- factor(pdata$IUCN,levels=c('EX_A',
@@ -60,8 +60,7 @@ pdata$IUCN <- factor(pdata$IUCN,levels=c('EX_A',
                                          'EN_A','EN_B','EN_M',
                                          'VU_A','VU_B','VU_M',
                                          'NT_A','NT_B','NT_D','NT_M',
-                                         'LC_M',
-                                         'DD') %>% rev())
+                                         'LC_M') %>% rev())
 #
 pdata <- pdata[order(as.numeric(pdata$IUCN)),]
 
@@ -76,9 +75,10 @@ pdata$p_label <- paste0(round(pdata$IUCN_num_p*100,1),'%')
 #pdata$p_label[pdata$IUCN_num_p<0.002] <- ''
 pdata <- pdata[pdata$IUCN_num_p > 0.0005,]
 
-mycol <- c("#D1D1C6","#70BE50","#CCE226","#FFF204","#F89D57","#ED1C2E","BLACK")
+mycol <- c("#70BE50","#CCE226","#FFF204","#F89D57","#ED1C2E","BLACK")
+#mycol <- c("#D1D1C6","#70BE50","#CCE226","#FFF204","#F89D57","#ED1C2E","BLACK")
 mycol2 <- c()
-for (i in 1:7) {
+for (i in 1:6) {
   original_color <- mycol[i]
   palette <- colorRampPalette(c(original_color, "white"))
   mycol2 <- c(mycol2,palette(6)[1:sum(as.numeric(pdata$IUCN_c)%in%i)] %>% rev())
@@ -100,8 +100,8 @@ p1 <- ggplot() +
   scale_x_continuous(lim = c(0.24,1.5), expand = c(0,0))+
   scale_y_continuous(expand = c(0.01,0.01))+
   scale_fill_manual(values = mycol,guide=NULL) +
-  geom_text(data=pdata1,aes(x=1.25,y=IUCN_num_cum+500,label=IUCN_label)) +
-  geom_text(data=pdata1,aes(x=0.9,y=IUCN_num_cum,label=p_label),cex=3) +
+  geom_text(data=pdata1,aes(x=1.25,y=IUCN_num_cum+1500,label=IUCN_label)) +
+  geom_text(data=pdata1,aes(x=0.9,y=IUCN_num_cum+500,label=p_label),cex=3) +
   geom_text(aes(x=1,y=nrow(pdat)-5000,label='(%)'),cex=3) +
   #xlim(c(0.2,1.5))+
   coord_flip()+
@@ -113,7 +113,7 @@ pdata2$p_label <- str_remove(pdata2$p_label,'%')
 pdata2$IUCN_num_cum[11] <- pdata2$IUCN_num_cum.raw[11] - 1000
 pdata2$IUCN_num_cum[10] <- pdata2$IUCN_num_cum.raw[10] - 500
 pdata2$IUCN_num_cum[9] <- pdata2$IUCN_num_cum.raw[9] - 750
-pdata2$IUCN_num_cum[8] <- pdata2$IUCN_num_cum.raw[8] - 3200
+pdata2$IUCN_num_cum[8] <- pdata2$IUCN_num_cum.raw[8] - 5000
 pdata2$IUCN_num_cum[7] <- pdata2$IUCN_num_cum.raw[7] + 3200
 
 p2 <- ggplot() +  
@@ -129,6 +129,7 @@ p2 <- ggplot() +
   #xlim(c(0,1.2))+
   coord_flip()+
   theme_void()
+p2
 segs <- c(0,cumsum(rev(pdata2$IUCN_num)))
 for (seg in segs) {
   p2 <- p2 + annotate('segment',y=seg,yend=seg,x=0.85,xend=0.925,lwd=0.5)
@@ -143,31 +144,34 @@ for (seg in segs) {
 sapply(c('sf','dplyr','ggplot2','raster','RColorBrewer'),require,character.only=T)
 
 #### load data
-shp <- read_sf('data/map/data_1d/data_1d_land.shp')
-rli <- read.csv('data/outputs/cell_1d.csv')
-rli$RLI <- rli$RLI_climC
+shp <- read_sf(paths['baseMap'])
+shp$land <- shp$land%in%c(1,'T','TRUE')
+#rli <- read.csv('data/outputs/cell_1d.csv')
+#rli$RLI <- rli$RLI_climC
 
-# red.list <- read.csv('data/outputs/spInfo/sp_assess_simple.csv')
-# sp.ds.1d.raw <- sp.ds.1d <- read.csv('data/spcell_1d/sp_cellpoll_all.csv')
-# 
-# red.list$IUCN <- red.list[['climCategory']]
-# sp.ds.1d <- left_join(sp.ds.1d.raw,red.list[,c('speciesKey','IUCN')])
-# sp.ds.1d <- sp.ds.1d[!is.na(sp.ds.1d$IUCN),]
-# sp.ds.1d$IUCN <- factor(sp.ds.1d$IUCN,levels=c('LC','NT','VU','EN','CR','EX')) %>% as.numeric()
-# sp.ds.1d$wt <- 1-(sp.ds.1d$IUCN-1)/max(sp.ds.1d$IUCN-1)
-# rli <-  sp.ds.1d %>% group_by(cell_poll) %>% mutate(RLI=mean(wt),SR=n()) %>% ungroup() %>% 
-#   dplyr::select(cell_poll,RLI,SR) %>% distinct() 
-#colnames(rli)[1] <- 'cell_poll'
+red.list <- read.csv(paths["spAssAll"])
+red.list$category <- red.list[,"ssp370_limit"]
+sp.ds.1d.raw <- sp.ds.1d <- read.csv(paths["spds1d"])
 
-shp <- shp[,c('cell_poll')]
+red.list$IUCN <- red.list[['category']]
+sp.ds.1d <- left_join(sp.ds.1d.raw,red.list[,c('speciesKey','IUCN')])
+sp.ds.1d <- sp.ds.1d[!is.na(sp.ds.1d$IUCN),]
+sp.ds.1d$IUCN <- factor(sp.ds.1d$IUCN,levels=c('LC','NT','VU','EN','CR','EX')) %>% as.numeric()
+sp.ds.1d$wt <- 1-(sp.ds.1d$IUCN-1)/max(sp.ds.1d$IUCN-1,na.rm=T)
+rli <-  sp.ds.1d %>% group_by(cell_poll) %>% mutate(RLI=mean(wt,na.rm=T),SR=n()) %>% ungroup() %>%
+  dplyr::select(cell_poll,RLI,SR) %>% distinct()
+colnames(rli)[1] <- 'cell_poll'
+
+shp <- shp[,c('cell_poll','land')]
 shp <- left_join(shp,rli)
 shp$RLI[shp$SR<10] <- NA
+shp$RLI[!shp$land] <- NA
 
 ########
 
 mypalette <- colorRampPalette(c("#70BE50","#FFF204","#F89D57","#ED1C2E","darkred"))
 mycol <- rev(mypalette(100))
-mycol <- mycol[c(seq(1,50,2),51:100)]
+# mycol <- mycol[c(seq(1,50,2),51:100)]
 # mypalette <- colorRampPalette(c("#FFF204","#F89D57","#ED1C2E","darkred"))
 # mycol <- rev(mypalette(100))
 
@@ -179,15 +183,76 @@ p3 <- ggplot(shp) +
   scale_colour_gradientn(colors = mycol,na.value = 'gray95') +
   scale_x_continuous(limits = c(-170,170)) +
   theme_bw() + theme(panel.grid=element_blank(),
-                     legend.position = c(0.05,0.35),
+                     plot.margin = margin(t = 0, r = 10, b = 1, l = 10, unit = "pt"),
+                     legend.position = c(0.05,0.32),
                      #legend.direction = 'horizontal',
+                     axis.ticks = element_blank(),
+                     axis.text = element_blank(),
                      legend.key.height = unit(0.25, "in"),
                      legend.key.width = unit(0.1, "in"))
 
 p3
 
-windows(height = 4.8,width = 7)
-p <- p1+p2+p3+plot_layout(ncol=1,heights = c(0.7,0.6,3.5))
+# family info -------------------------------------------------------------
+
+library(ggplot2)
+#fadat <- read.csv('outputs/table/family/data S2_summary in the family level.csv')
+fadat <-  read.csv(paths['faInfo'])
+# red.list <- read.csv(paths["spAssSim"])
+# spls <- read.csv(paths["spLS"])
+# red.list <- left_join(red.list,spls[,c('speciesKey','family')]) %>% na.omit() %>% rename(Family=family)
+# fadat <- red.list %>% group_by(Family) %>% reframe(S.=n(),RLI=mean(wt_new,na.rm=T))
+
+fadat <- fadat[fadat$S.>100,]
+faDatPlot <- fadat[order(fadat$S.,decreasing = T)[0:25+1],]
+faDatPlot$flag <- 'Lagest families'
+tmp <- fadat[order(fadat$RLI)[1:25],]
+tmp$flag <- 'Families with lowest RLI'
+faDatPlot <- rbind(faDatPlot,tmp)
+faDatPlot$flag[1] <- 'All species'
+faDatPlot$flag <- factor(faDatPlot$flag,levels = unique(faDatPlot$flag))
+
+faDatPlot$Family[1] <- 'All species'
+faDatPlot$Family.num <- 1:nrow(faDatPlot)
+#faDatPlot$Family <- factor(1:20,labels = faDatPlot$Family)
+
+cols <- c("gray10","#1f77b4","#ff7f0e")
+p.fa <- ggplot(faDatPlot, aes(x = Family.num, y = RLI, color = flag)) +
+  geom_point(size=1)+
+  xlab('')+
+  scale_color_manual(values = cols) +
+  scale_x_continuous(breaks=faDatPlot$Family.num,labels=faDatPlot$Family)+
+  # scale_color_manual(values = cols,
+  #                    breaks = setdiff(levels(faDatPlot$flag), " "),) +
+  theme_bw()+
+  theme(
+    legend.position = c(0.75,0.7),
+    legend.direction = "horizontal",
+    legend.margin = margin(t = 0.5, r = 1.5, b = 0.5, l = 1),
+    legend.title = element_blank(),
+    legend.background = element_rect(color = 'gray50'),
+    legend.text = element_text(size = 6),
+    legend.spacing = unit(1, "pt"),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5,size=5)
+  )
+p.fa
+# join figs ---------------------------------------------------------------
+
+
+#windows(height = 6,width = 7)
+p <- p1+p2+plot_layout(ncol=1,heights = c(0.7,0.6))
 p
-ggsave('outputs/fig1/figure1.jpg',width = 7,height = 4.8)
-ggsave('outputs/fig1/figure1.eps',width = 7,height = 4.8)
+ggsave(paste0(paths['fig1_dir'],'figure1a.jpg'),plot=p,width = 7,height = 1.3)
+ggsave(paste0(paths['fig1_dir'],'figure1a.pdf'),plot=p,width = 7,height = 1.3)
+
+#p <- p1+p2+p3+plot_layout(ncol=1,heights = c(0.7,0.6,3.5))
+p3
+ggsave(paste0(paths['fig1_dir'],'figure1c.jpg'),plot=p3,width = 7,height = 3.1)
+ggsave(paste0(paths['fig1_dir'],'figure1c.pdf'),plot=p3,width = 7,height = 3.1)
+
+p.fa
+ggsave(paste0(paths['fig1_dir'],'figure1b.jpg'),plot=p.fa,width = 7,height = 1.6)
+ggsave(paste0(paths['fig1_dir'],'figure1b.pdf'),plot=p.fa,width = 7,height = 1.6)

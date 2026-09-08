@@ -1,40 +1,24 @@
-# map ------------------------------------------------------
-setwd('D:/work/RLI/')
-sapply(c('sf','dplyr','ggplot2','raster','RColorBrewer','patchwork'),require,character.only=T)
+# load map data -----------------------------------------------------
 
-# aggregate map data -----------------------------------------------------
-
-dat <- read.csv('data/outputs/cell_1d.csv') %>% distinct()
-
-dat <- dat %>%
-  mutate(SR=SR,
-         threat=SR_THR,
-         VU=SR_VU,
-         EN=SR_EN,
-         CREX=SR_CREX) %>%
-  dplyr::select(cell_poll,
-                SR,
-                threat,
-                VU,EN,CREX) %>%
-  distinct() %>%
-  mutate(p_threat=threat/SR*100,
-         p_VU=VU/SR*100,
-         p_EN=EN/SR*100,
-         p_CREX=CREX/SR*100)
+dat <- read.csv(paths['cellInfo']) %>% distinct()
+dat$p_threat[dat$p_threat==100] <- NA
+dat$p_VU[dat$p_VU==100] <- NA
+dat$p_EN[dat$p_EN==100] <- NA
+dat$p_CREX[dat$p_CREX==100] <- NA
 
 # mapping -----------------------------------------------------------------
 
-shp <- read_sf('data/map/data_1d/data_1d_land.shp')
-
+shp <- read_sf(paths['baseMap'])
 shp <- shp[,c('cell_poll','land','land2')]
 shp <- left_join(shp,dat)
-shp[!shp$land,-1] <- NA
+
+shp[!shp$land%in%'T',-1] <- NA
 shp[shp$land2%in%FALSE,c('p_VU','p_EN','p_CREX')] <- NA
 
 mycol <- hcl.colors(100, palette = "viridis")%>% rev()
 
 p1 <- ggplot(shp) +    
-  geom_sf(aes(fill = threat),color='transparent') + # ,lwd =0  
+  geom_sf(aes(fill = SR_THR),color='transparent') + # ,lwd =0  
   scale_fill_gradientn(colors = mycol,
                        name='',
                        na.value = 'gray95') +
@@ -75,7 +59,7 @@ p2 <- ggplot(shp) +
         legend.direction = 'horizontal',
         legend.key.height = unit(0.05, "in"),
         legend.key.width = unit(0.3, "in")) +
-  labs(title='  Threatened species proportion')
+  labs(title='  Percent of threatened species')
 p2
 
 p3 <- ggplot(shp) +    
@@ -146,10 +130,11 @@ p5
 
 #windows(height = 4.8,width = 7)
 p1row <- p1+p2+plot_layout(nrow = 1,widths = c(3,3),heights = 2.4)
-ggsave('outputs/fig3/figure3a.jpg',width = 6,height = 2.1)
-ggsave('outputs/fig3/figure3a.pdf',width = 6,height = 2.1)
+ggsave(paths['fig3a'],width = 6,height = 2.1)
+#ggsave('results/v3/fig3/figure3a.jpg',width = 6,height = 2.1)
 #ggsave('outputs/fig3/figure3a.eps',width = 6,height = 2.4)
 
 p2row <- p3+p4+p5+plot_layout(nrow=1,widths = c(2,2,2),heights = 1.8)
-ggsave('outputs/fig3/figure3b.jpg',width = 6,height = 1.6)
-ggsave('outputs/fig3/figure3b.pdf',width = 6,height = 1.6)
+#ggsave('outputs/fig3/figure3b.jpg',width = 6,height = 1.6)
+ggsave(paths['fig3b'],width = 6,height = 1.6)
+

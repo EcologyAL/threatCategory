@@ -1,6 +1,4 @@
-library(ggplot2);library(stringr);library(sf);library(dplyr);library(raster)
-setwd('F:/luoao/RLI/')
-sp.timespan <- read.csv('data/spinfo/spls_mark_all.csv')
+sp.timespan <- read.csv(paths["spMarkAll"])
 sp.timespan$timespan[is.na(sp.timespan$timespan)] <- '2041-2070'
 
 sp.range <- read.csv('data/spinfo/rangeChange/spInfo_half.csv')

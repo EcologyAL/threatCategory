@@ -1,9 +1,6 @@
-setwd('D:/work/RLI/')
-sapply(c('sf','dplyr','ggplot2','raster','RColorBrewer','stringr','patchwork'),require,character.only=T)#'rasterVis'
-
-shp <- read_sf('data/map/data_1d/data_1d_land.shp')
-shp <- shp[,c('cell_poll','land')]
-dat <- read.csv('data/outputs/cell_1d.csv') %>% distinct()
+shp <- read_sf(paths['baseMap'])
+shp <- shp[,c('cell_poll','land')];shp$land <- shp$land%in%c('T','TRUE','1')
+dat <- read.csv(paths['cellInfo']) %>% distinct()
 shp <- left_join(shp,dat)
 
 #shp$RLI[shp$SR<10] <- NA
@@ -19,37 +16,45 @@ shp$SR_NTHR <- shp$SR-shp$SR_THR
 p.list <- list()
 for(i in 1:6){
   x <- c('SR','SR_THR','SR_NTHR','SR_VU','SR_EN','SR_CREX')[i]
-  y <- c('(a) Total','(b) Threatened','(c) LC&NT','(d) VU','e EN','(f) CR&EX')[i]
+  y <- c('(a) Total','(b) Threatened','(c) LC&NT','(d) VU','(e) EN','(f) CR&EX')[i]
   shp$value <- shp[[x]]
   shp$value[!shp$land] <- NA
-  p <- ggplot(shp) +    
-    geom_sf(aes(fill = value,colour=value)) + # ,lwd =0  
-    scale_fill_gradientn(colors = mycol,
-                         name='',
-                         na.value = 'gray95') +
-    scale_colour_gradientn(colors = mycol,na.value = 'gray95',guide='none') +
-    scale_x_continuous(limits = c(-170,170)) +
-    labs(title=y)+
-    theme_void()+
-    theme_bw() + theme(panel.grid=element_blank(),
-                       legend.position = 'bottom',
-                       legend.direction = 'horizontal',
-                       axis.ticks.x = element_blank(),
-                       axis.text.x = element_blank(),
-                       legend.key.height = unit(0.1, "in"),
-                       legend.key.width = unit(0.5, "in"))
   
-  p.list <- c(p.list,list(p))
+  p <- ggplot(shp) +
+    geom_sf(aes(fill = value, colour = value)) +
+    scale_fill_gradientn(colors = mycol,
+                         name = '',
+                         na.value = 'gray95',
+                         guide = guide_colorbar(
+                           direction      = 'vertical',
+                           barwidth       = unit(0.1, 'in'),  # narrow bar
+                           barheight      = unit(0.5, 'in'),  # short bar
+                           ticks          = TRUE,
+                           label.position = 'right'
+                         )) +
+    scale_colour_gradientn(colors = mycol, na.value = 'gray95', guide = 'none') +
+    scale_x_continuous(limits = c(-170, 170)) +
+    labs(title = y) +
+    theme_bw() +
+    theme(panel.grid            = element_blank(),
+          axis.text             = element_blank(),
+          axis.ticks            = element_blank(),
+          axis.title            = element_blank(),
+          legend.position       = c(0.02, 0.1),
+          legend.justification  = c(0, 0),
+          legend.background     = element_rect(fill = NA, color = NA),
+          legend.text           = element_text(size = 5))  # small label text
+  
+  p.list <- c(p.list, list(p))
 }
 
-windows(height = 7,width = 6)
 p <- p.list[[1]] + p.list[[2]] +
   p.list[[3]] + p.list[[4]] +
   p.list[[5]] + p.list[[6]] +
-  plot_layout(ncol=2)#+plot_layout(ncol=2,nrow=3,heights = c(1.5,1.5,1.5),widths = c(3,3))
+  plot_layout(ncol = 2)
+
 p
-ggsave('outputs/sfig/SR_Category.jpg',width = 6,height = 7)
-ggsave('outputs/sfig/SR_Category.eps',width = 6,height = 7)
+ggsave(paths['sfig_sr_category'], width = 6, height = 5)
 
 # p <- ggplot(shp) +    
 #   geom_sf(aes(fill = value,colour=value)) + # ,lwd =0  
