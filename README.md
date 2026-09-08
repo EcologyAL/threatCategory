@@ -4,6 +4,7 @@ R scripts for estimating generation length, predicting habitat, assessing specie
 
 ## Repository structure
 
+```text
 .
 ├── generation_length/
 │   ├── generation_length_model.R       # Main code for the generation-length model
@@ -43,5 +44,5 @@ R scripts for estimating generation length, predicting habitat, assessing specie
 │   └── v5.R                            # Main workflow, starting from known species ranges
 ├── summaryShp/                         # Spatial summaries and Red List Index maps
 ├── tables/                             # Family, country, biome, and time-span summaries
-├── uncertainty/                        # Model performance, rare species, and subsampling analyses
-└── FILE_MAP.md                         # Complete original-to-publication filename mapping
+└── uncertainty/                        # Model performance, rare species, and subsampling analyses
+```
